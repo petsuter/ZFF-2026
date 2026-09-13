@@ -469,7 +469,7 @@
                 const totalLikes = globalLikes[getSafeKey(movie.Film)] || 0;
                 const rating = movie["IMDb Rating"] && movie["IMDb Rating"] !== 'N/A' ? movie["IMDb Rating"] : null;
                 const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film)}&s=tt`;
-                const zffUrl = `https://zff.com/en/movies/${encodeURIComponent(getSafeKey(movie.Film).toLowerCase())}`;
+                const zffUrl = `https://zff.com/en/movies/${getZffKey(movie.Film)}`;
 
                 // Screening list items
                 const scheduleItems = (movie["Screenings"] || '')
@@ -596,6 +596,9 @@
         }
         function getSafeKey(title) {
             return encodeURIComponent(title).replace(/\./g, '%2E');
+        }
+        function getZffKey(title) {
+            return encodeURIComponent(title.replace(/\.| /g, '-').toLowerCase());
         }
         function toggleFavorite(title) {
             const movieRef = db.ref('likes/' + getSafeKey(title));
