@@ -246,24 +246,6 @@
         let favorites = new Set(JSON.parse(localStorage.getItem('zff_favorites') || '[]'));
         let globalLikes = {};
 
-        // --- FIREBASE INITIALIZATION ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCC7wMJEKniXitvMKmE0A-7VKBO-EroZg0",
-            authDomain: "zff-2026.firebaseapp.com",
-            databaseURL: "https://zff-2026-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "zff-2026",
-            storageBucket: "zff-2026.firebasestorage.app",
-            messagingSenderId: "389745136403",
-            appId: "1:389745136403:web:39f7ce4bf51596766900e6"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // Listen to global likes in real-time across all visitors
-        db.ref('likes').on('value', (snapshot) => {
-            globalLikes = snapshot.val() || {};
-            renderMovies();
-        });
 
         // Preloaded Fallback Demo Data (Used if movies.csv is missing or not served via server)
         const demoData = [
@@ -513,7 +495,7 @@
                                 ` : ''}
                                 ${movie["Film Länge (Min)"] ? `
                                     <span class="text-xs text-gray-400 flex items-center gap-1 font-medium">
-                                        <i class="fa-regular fa-clock text-zff-gold"></i> ${escapeHtml(movie["First Release Year"])} min
+                                        <i class="fa-regular fa-clock text-zff-gold"></i> ${escapeHtml(movie["Film Länge (Min)"])} min
                                     </span>
                                 ` : ''}
                             </div>
@@ -680,6 +662,26 @@
             if (!str) return '';
             return String(str).replace(/'/g, "\\'");
         }
+
+                // --- FIREBASE INITIALIZATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCC7wMJEKniXitvMKmE0A-7VKBO-EroZg0",
+            authDomain: "zff-2026.firebaseapp.com",
+            databaseURL: "https://zff-2026-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "zff-2026",
+            storageBucket: "zff-2026.firebasestorage.app",
+            messagingSenderId: "389745136403",
+            appId: "1:389745136403:web:39f7ce4bf51596766900e6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Listen to global likes in real-time across all visitors
+        db.ref('likes').on('value', (snapshot) => {
+            globalLikes = snapshot.val() || {};
+            renderMovieCards();
+        });
+
     </script>
 </body>
 </html>
