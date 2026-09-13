@@ -598,7 +598,7 @@
             return encodeURIComponent(title).replace(/\./g, '%2E');
         }
         function toggleFavorite(title) {
-            const movieRef = db.ref('likes/' + getSafeKey((title));
+            const movieRef = db.ref('likes/' + getSafeKey(title));
             if (favorites.has(title)) {
                 favorites.delete(title);
                 movieRef.transaction(current => Math.max((current || 1) - 1, 0));
