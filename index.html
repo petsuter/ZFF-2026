@@ -439,8 +439,8 @@
                     const tB = parseInt(b["First Release Year"]) || 0;
                     return tA - tB;
                 } else if (sortBy === 'total_likes') {
-                    const tA = globalLikes[a.Film] || 0;
-                    const tB = globalLikes[b.Film] || 0;
+                    const tA = globalLikes[getSafeKey(a.Film)] || 0;
+                    const tB = globalLikes[getSafeKey(b.Film)] || 0;
                     return tB - tA;
                 }
                 return 0;
@@ -466,10 +466,10 @@
 
             grid.innerHTML = filteredData.map((movie, index) => {
                 const isFav = favorites.has(movie.Film);
-                const totalLikes = globalLikes[movie.Film] || 0;
+                const totalLikes = globalLikes[getSafeKey(movie.Film)] || 0;
                 const rating = movie["IMDb Rating"] && movie["IMDb Rating"] !== 'N/A' ? movie["IMDb Rating"] : null;
                 const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film)}&s=tt`;
-                const zffUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film.toLowerCase())}&s=tt`;
+                const zffUrl = `https://www.imdb.com/find?q=${encodeURIComponent(getSafeKey(movie.Film).toLowerCase())}&s=tt`;
 
                 // Screening list items
                 const scheduleItems = (movie["Screenings"] || '')
@@ -594,9 +594,11 @@
                 `;
             }).join('');
         }
-
+        function getSafeKey(title) {
+            return encodeURIComponent(title).replace(/\./g, '%2E');
+        }
         function toggleFavorite(title) {
-            const movieRef = db.ref('likes/' + encodeURIComponent(title));
+            const movieRef = db.ref('likes/' + getSafeKey((title));
             if (favorites.has(title)) {
                 favorites.delete(title);
                 movieRef.transaction(current => Math.max((current || 1) - 1, 0));
