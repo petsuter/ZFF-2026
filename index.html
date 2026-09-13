@@ -469,7 +469,7 @@
                 const totalLikes = globalLikes[getSafeKey(movie.Film)] || 0;
                 const rating = movie["IMDb Rating"] && movie["IMDb Rating"] !== 'N/A' ? movie["IMDb Rating"] : null;
                 const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film)}&s=tt`;
-                const zffUrl = `https://www.imdb.com/find?q=${encodeURIComponent(getSafeKey(movie.Film).toLowerCase())}&s=tt`;
+                const zffUrl = `https://zff.com/en/movies/${encodeURIComponent(getSafeKey(movie.Film).toLowerCase())}`;
 
                 // Screening list items
                 const scheduleItems = (movie["Screenings"] || '')
