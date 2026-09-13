@@ -35,6 +35,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Firebase Realtime Database SDK (v9 Compatibility Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         body {
@@ -148,6 +151,7 @@
                             <option value="screenings_desc">Most Screenings</option>
                             <option value="runtime_desc">Runtime (Longest First)</option>
                             <option value="runtime_asc">Runtime (Shortest First)</option>
+                            <option value="total_likes">Likes</option>
                         </select>
                     </div>
 
@@ -240,6 +244,26 @@
         let moviesData = [];
         let filteredData = [];
         let favorites = new Set(JSON.parse(localStorage.getItem('zff_favorites') || '[]'));
+        let globalLikes = {};
+
+        // --- FIREBASE INITIALIZATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCC7wMJEKniXitvMKmE0A-7VKBO-EroZg0",
+            authDomain: "zff-2026.firebaseapp.com",
+            databaseURL: "https://zff-2026-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "zff-2026",
+            storageBucket: "zff-2026.firebasestorage.app",
+            messagingSenderId: "389745136403",
+            appId: "1:389745136403:web:39f7ce4bf51596766900e6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Listen to global likes in real-time across all visitors
+        db.ref('likes').on('value', (snapshot) => {
+            globalLikes = snapshot.val() || {};
+            renderMovies();
+        });
 
         // Preloaded Fallback Demo Data (Used if movies.csv is missing or not served via server)
         const demoData = [
@@ -432,6 +456,10 @@
                     const tA = parseInt(a["First Release Year"]) || 0;
                     const tB = parseInt(b["First Release Year"]) || 0;
                     return tA - tB;
+                } else if (sortBy === 'total_likes') {
+                    const tA = globalLikes[a.Film] || 0;
+                    const tB = globalLikes[b.Film] || 0;
+                    return tB - tA;
                 }
                 return 0;
             });
@@ -456,8 +484,10 @@
 
             grid.innerHTML = filteredData.map((movie, index) => {
                 const isFav = favorites.has(movie.Film);
+                const totalLikes = globalLikes[movie.Film] || 0;
                 const rating = movie["IMDb Rating"] && movie["IMDb Rating"] !== 'N/A' ? movie["IMDb Rating"] : null;
                 const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film)}&s=tt`;
+                const zffUrl = `https://www.imdb.com/find?q=${encodeURIComponent(movie.Film.toLowerCase())}&s=tt`;
 
                 // Screening list items
                 const scheduleItems = (movie["Screenings"] || '')
@@ -544,10 +574,14 @@
                         <div class="flex md:flex-col items-center md:items-end justify-between shrink-0 gap-3">
                             <button onclick="toggleFavorite('${escapeQuotes(movie.Film)}')" class="p-3 rounded-xl border transition ${isFav ? 'bg-rose-500/20 text-rose-500 border-rose-500/40' : 'bg-zff-accent hover:bg-zff-border text-gray-400 border-zff-border'}" title="Toggle Favorite">
                                 <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>
+                                <span style="font-size: 0.8rem;">(${totalLikes})</span>
                             </button>
 
                             <a href="${imdbUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-zff-accent hover:bg-zff-border border border-zff-border text-xs text-gray-300 font-semibold flex items-center gap-1.5 transition">
                                 <i class="fa-solid fa-arrow-up-right-from-square text-zff-gold"></i> IMDb
+                            </a>
+                            <a href="${zffUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-zff-accent hover:bg-zff-border border border-zff-border text-xs text-gray-300 font-semibold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-zff-gold"></i> ZFF
                             </a>
                         </div>
                     </div>
@@ -580,10 +614,13 @@
         }
 
         function toggleFavorite(title) {
+            const movieRef = db.ref('likes/' + encodeURIComponent(title));
             if (favorites.has(title)) {
                 favorites.delete(title);
+                movieRef.transaction(current => Math.max((current || 1) - 1, 0));
             } else {
                 favorites.add(title);
+                movieRef.transaction(current => (current || 0) + 1);
             }
             localStorage.setItem('zff_favorites', JSON.stringify(Array.from(favorites)));
             updateFavoritesCounter();
